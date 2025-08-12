@@ -1,0 +1,15 @@
+version: 1
+
+env:
+  - CGO_ENABLED=0
+
+goos: linux
+goarch: amd64
+
+main: ./main.go
+
+binary: clipboard-clearer-{{ .Os }}-{{ .Arch }}
+
+ldflags:
+  - "-w"
+  - "-s"

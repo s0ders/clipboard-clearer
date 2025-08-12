@@ -19,7 +19,7 @@ func WatchAndClearClipboard(ctx context.Context, clipboardExpiration time.Durati
 		}
 
 		watchText := clipboard.Watch(ctx, clipboard.FmtText)
-		watchImage := clipboard.Watch(ctx, clipboard.FmtImage)
+		watchImage := clipboard.Watch(ctx, clipboard.FmtImage) // only catches PNG encoded images
 
 		var contextQueue []context.CancelFunc
 
@@ -31,6 +31,8 @@ func WatchAndClearClipboard(ctx context.Context, clipboardExpiration time.Durati
 				if !ok {
 					return
 				}
+
+				fmt.Println("[+] new text in clipboard")
 
 				if len(contextQueue) > 0 {
 					contextQueue[0]()
@@ -44,7 +46,7 @@ func WatchAndClearClipboard(ctx context.Context, clipboardExpiration time.Durati
 				ClearTextClipboard(clearTextContext, clipboardExpiration)
 			case <-watchImage:
 				// TODO: not implemented yet
-				fmt.Println("New image received")
+				fmt.Println("[+] new image in clipboard")
 			}
 		}
 	}()
