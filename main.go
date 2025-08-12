@@ -6,10 +6,8 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/getlantern/systray"
-
-	"github.com/s0ders/clipboard-clearer/icon"
-	"github.com/s0ders/clipboard-clearer/internal"
+	"github.com/s0ders/clipboard-clearer/internal/clipboard"
+	"github.com/s0ders/clipboard-clearer/internal/tray"
 )
 
 func main() {
@@ -24,32 +22,9 @@ func main() {
 		cancel()
 	}()
 
-	go func() {
-		onExit := func() {}
+	tray.StartSystray(ctx, cancel)
 
-		onReady := func() {
-			systray.SetTemplateIcon(icon.Data, icon.Data)
-			systray.SetTitle("Clipboard Clearer")
-			systray.SetTooltip("Clipboard Clearer")
-			quitTrayCh := systray.AddMenuItem("Quit", "Quit the app")
-
-			go func() {
-				for {
-					select {
-					case <-quitTrayCh.ClickedCh:
-						cancel()
-						systray.Quit()
-					case <-ctx.Done():
-						systray.Quit()
-					}
-				}
-			}()
-		}
-
-		systray.Run(onReady, onExit)
-	}()
-
-	done := internal.WatchAndClearClipboard(ctx, 5*time.Second)
+	done := clipboard.WatchAndClear(ctx, 5*time.Second)
 
 	<-done
 }

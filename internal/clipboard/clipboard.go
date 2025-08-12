@@ -1,25 +1,29 @@
-package internal
+// Package clipboard contains all operations related to the clipboard management.
+package clipboard
 
 import (
 	"context"
-	"fmt"
+	"sync"
 	"time"
 
-	"golang.design/x/clipboard"
+	xclipboard "golang.design/x/clipboard"
 )
 
-func WatchAndClearClipboard(ctx context.Context, clipboardExpiration time.Duration) <-chan struct{} {
+// WatchAndClear watches the system clipboard and clears it after a given amount of time.
+func WatchAndClear(ctx context.Context, clipboardExpiration time.Duration) <-chan struct{} {
 	done := make(chan struct{})
 
 	go func() {
 		defer close(done)
 
-		if err := clipboard.Init(); err != nil {
+		if err := xclipboard.Init(); err != nil {
 			panic(err)
 		}
 
-		watchText := clipboard.Watch(ctx, clipboard.FmtText)
-		watchImage := clipboard.Watch(ctx, clipboard.FmtImage) // only catches PNG encoded images
+		watchImageChannel := xclipboard.Watch(ctx, xclipboard.FmtImage) // only detects PNG encoded images
+		watchTextChannel := xclipboard.Watch(ctx, xclipboard.FmtText)
+
+		watchChannel := FanInChannels(ctx, watchTextChannel, watchImageChannel)
 
 		var contextQueue []context.CancelFunc
 
@@ -27,26 +31,21 @@ func WatchAndClearClipboard(ctx context.Context, clipboardExpiration time.Durati
 			select {
 			case <-ctx.Done():
 				return
-			case _, ok := <-watchText:
+			case _, ok := <-watchChannel:
 				if !ok {
 					return
 				}
-
-				fmt.Println("[+] new text in clipboard")
 
 				if len(contextQueue) > 0 {
 					contextQueue[0]()
 					contextQueue = contextQueue[:0]
 				}
 
-				clearTextContext, clearTextContextFunc := context.WithCancel(ctx)
+				clearClipboardContext, clearClipboardContextFunc := context.WithCancel(ctx)
 
-				contextQueue = append(contextQueue, clearTextContextFunc)
+				contextQueue = append(contextQueue, clearClipboardContextFunc)
 
-				ClearTextClipboard(clearTextContext, clipboardExpiration)
-			case <-watchImage:
-				// TODO: not implemented yet
-				fmt.Println("[+] new image in clipboard")
+				Clear(clearClipboardContext, clipboardExpiration)
 			}
 		}
 	}()
@@ -54,7 +53,8 @@ func WatchAndClearClipboard(ctx context.Context, clipboardExpiration time.Durati
 	return done
 }
 
-func ClearTextClipboard(ctx context.Context, after time.Duration) {
+// Clear removes the current content of the clipboard.
+func Clear(ctx context.Context, after time.Duration) {
 	go func() {
 		timer := time.NewTimer(after)
 
@@ -65,8 +65,47 @@ func ClearTextClipboard(ctx context.Context, after time.Duration) {
 			case <-ctx.Done():
 				return
 			case <-timer.C:
-				clipboard.Write(clipboard.FmtText, []byte{})
+				xclipboard.Write(xclipboard.FmtText, []byte{})
 			}
 		}
 	}()
+}
+
+// FanInChannels sends all messages coming from the input channels into a single output channel.
+func FanInChannels[K any](ctx context.Context, channels ...<-chan K) chan K {
+	out := make(chan K)
+
+	var wg sync.WaitGroup
+
+	wg.Add(len(channels))
+
+	for _, channel := range channels {
+		go func() {
+			defer wg.Done()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case v, more := <-channel:
+					if !more {
+						return
+					}
+
+					select {
+					case <-ctx.Done():
+						return
+					case out <- v:
+					}
+				}
+			}
+		}()
+	}
+
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	return out
 }

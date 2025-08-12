@@ -1,6 +1,6 @@
 module github.com/s0ders/clipboard-clearer
 
-go 1.24
+go 1.24.2
 
 require (
 	github.com/getlantern/context v0.0.0-20190109183933-c447772a6520 // indirect
