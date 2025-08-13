@@ -14,4 +14,5 @@ Clipboard Clearer is a program that clears the content of your OS clipboard afte
 
 - [x] GitHub Actions pipeline to lint, tests and release
 - [x] Handle image clipboard
-- [ ] Make clipboard liveness time configurable (cfg file with a default of 10s ?)
+- [ ] Make clipboard liveness time configurable (cfg file with a default of 10s ?) via systray maybe?
+- [ ] Create App bundle for macOS in CI/CD workflow
