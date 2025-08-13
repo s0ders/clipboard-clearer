@@ -22,9 +22,7 @@ func main() {
 		cancel()
 	}()
 
-	tray.StartSystray(ctx, cancel)
+	clipboard.WatchAndClear(ctx, 5*time.Second)
 
-	done := clipboard.WatchAndClear(ctx, 5*time.Second)
-
-	<-done
+	tray.Start(ctx, cancel)
 }

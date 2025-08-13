@@ -10,12 +10,8 @@ import (
 )
 
 // WatchAndClear watches the system clipboard and clears it after a given amount of time.
-func WatchAndClear(ctx context.Context, clipboardExpiration time.Duration) <-chan struct{} {
-	done := make(chan struct{})
-
+func WatchAndClear(ctx context.Context, clipboardExpiration time.Duration) {
 	go func() {
-		defer close(done)
-
 		if err := xclipboard.Init(); err != nil {
 			panic(err)
 		}
@@ -49,8 +45,6 @@ func WatchAndClear(ctx context.Context, clipboardExpiration time.Duration) <-cha
 			}
 		}
 	}()
-
-	return done
 }
 
 // Clear removes the current content of the clipboard.
@@ -66,6 +60,7 @@ func Clear(ctx context.Context, after time.Duration) {
 				return
 			case <-timer.C:
 				xclipboard.Write(xclipboard.FmtText, []byte{})
+				return
 			}
 		}
 	}()
