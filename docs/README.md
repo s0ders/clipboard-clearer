@@ -10,7 +10,7 @@
   <a href="https://github.com/s0ders/go-semver-release/blob/main/LICENSE.md"><img alt="GitHub License" src="https://img.shields.io/github/license/s0ders/clipboard-clearer?label=License"></a>
 </p>
 
-"Clipboard Clearer" is a program that clears the content of your OS clipboard after a given amount of time. It can run on
+"Clipboard Clearer" is a program that clears the content of the OS clipboard after a given amount of time. It can run on
  Linux, Windows and macOS. Accessible from the system tray, which is where the expiration time can be configured.
 
 ## TODOs
