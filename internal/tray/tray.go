@@ -3,24 +3,27 @@ package tray
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"github.com/getlantern/systray"
 
 	"github.com/s0ders/clipboard-clearer/icon"
+	"github.com/s0ders/clipboard-clearer/internal/appconfig"
 )
 
 // Start creates an icon for the program in the system tray.
-func Start(ctx context.Context, cancel context.CancelFunc) {
+func Start(ctx context.Context, cancel context.CancelFunc, appConfig *appconfig.Config) {
 	onExit := func() {}
 
 	onReady := func() {
 		systray.SetTemplateIcon(icon.Data, icon.Data)
 		systray.SetTooltip("Clipboard Clearer")
 
-		_ = systray.AddMenuItem("Expiration time: 10s", "")
+		expirationTimeIndicatorCh := systray.AddMenuItem(FormatDuration(appConfig.ClipboardExpiration()), "")
 		systray.AddSeparator()
-		_ = systray.AddMenuItem("Increase expiration time", "")
-		_ = systray.AddMenuItem("Decrease expiration time", "")
+		increaseCh := systray.AddMenuItem("Increase expiration time", "")
+		decreaseCh := systray.AddMenuItem("Decrease expiration time", "")
 		systray.AddSeparator()
 		quitTrayCh := systray.AddMenuItem("Quit", "Quit the app")
 
@@ -29,6 +32,12 @@ func Start(ctx context.Context, cancel context.CancelFunc) {
 
 			for {
 				select {
+				case <-increaseCh.ClickedCh:
+					appConfig.IncreaseClipboardExpirationTime()
+					expirationTimeIndicatorCh.SetTitle(FormatDuration(appConfig.ClipboardExpiration()))
+				case <-decreaseCh.ClickedCh:
+					appConfig.DecreaseClipboardExpirationTime()
+					expirationTimeIndicatorCh.SetTitle(FormatDuration(appConfig.ClipboardExpiration()))
 				case <-quitTrayCh.ClickedCh:
 					cancel()
 					return
@@ -40,4 +49,10 @@ func Start(ctx context.Context, cancel context.CancelFunc) {
 	}
 
 	systray.Run(onReady, onExit)
+}
+
+func FormatDuration(d time.Duration) string {
+	durationString := d.String()
+
+	return fmt.Sprintf("Expiration time: %s", durationString)
 }

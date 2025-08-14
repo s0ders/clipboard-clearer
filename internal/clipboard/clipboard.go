@@ -7,10 +7,12 @@ import (
 	"time"
 
 	xclipboard "golang.design/x/clipboard"
+
+	"github.com/s0ders/clipboard-clearer/internal/appconfig"
 )
 
 // WatchAndClear watches the system clipboard and clears it after a given amount of time.
-func WatchAndClear(ctx context.Context, clipboardExpiration time.Duration) {
+func WatchAndClear(ctx context.Context, appConfig *appconfig.Config) {
 	go func() {
 		if err := xclipboard.Init(); err != nil {
 			panic(err)
@@ -41,16 +43,22 @@ func WatchAndClear(ctx context.Context, clipboardExpiration time.Duration) {
 
 				contextQueue = append(contextQueue, clearClipboardContextFunc)
 
-				Clear(clearClipboardContext, clipboardExpiration)
+				Clear(clearClipboardContext, appConfig)
 			}
 		}
 	}()
 }
 
+// TODO: make the expiration time configurable via a channel which receives value from
+// the systray package when a user clicks on "increase" or "decrease" menu item.
+
+// TODO: see above TODO, would need to stop existing timer and restart them with the new
+// delay.
+
 // Clear removes the current content of the clipboard.
-func Clear(ctx context.Context, after time.Duration) {
+func Clear(ctx context.Context, appConfig *appconfig.Config) {
 	go func() {
-		timer := time.NewTimer(after)
+		timer := time.NewTimer(appConfig.ClipboardExpiration())
 
 		defer timer.Stop()
 

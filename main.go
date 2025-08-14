@@ -4,13 +4,15 @@ import (
 	"context"
 	"os"
 	"os/signal"
-	"time"
 
+	"github.com/s0ders/clipboard-clearer/internal/appconfig"
 	"github.com/s0ders/clipboard-clearer/internal/clipboard"
 	"github.com/s0ders/clipboard-clearer/internal/tray"
 )
 
 func main() {
+	appConfig := appconfig.New()
+
 	var interruptSignal = make(chan os.Signal, 1)
 	signal.Notify(interruptSignal, os.Interrupt)
 
@@ -22,7 +24,7 @@ func main() {
 		cancel()
 	}()
 
-	clipboard.WatchAndClear(ctx, 5*time.Second)
+	clipboard.WatchAndClear(ctx, appConfig)
 
-	tray.Start(ctx, cancel)
+	tray.Start(ctx, cancel, appConfig)
 }
