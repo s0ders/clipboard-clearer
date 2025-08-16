@@ -3,8 +3,6 @@ package clipboard
 
 import (
 	"context"
-	"time"
-
 	xclipboard "golang.design/x/clipboard"
 
 	"github.com/s0ders/clipboard-clearer/internal/appconfig"
@@ -34,6 +32,8 @@ func WatchAndClear(ctx context.Context, appConfig *appconfig.Config) {
 					return
 				}
 
+				// Cancel the previous timer to avoid it firing and clearing the new clipboard
+				// content earlier than expected.
 				if len(contextQueue) > 0 {
 					contextQueue[0]()
 					contextQueue = contextQueue[:0]
@@ -49,13 +49,10 @@ func WatchAndClear(ctx context.Context, appConfig *appconfig.Config) {
 	}()
 }
 
-// TODO: see above TODO, would need to stop existing timer and restart them with the new
-// delay.
-
 // Clear removes the current content of the clipboard.
 func Clear(ctx context.Context, appConfig *appconfig.Config) {
 	go func() {
-		timer := time.NewTimer(appConfig.ClipboardExpiration())
+		timer := appConfig.NewExpirationTimer()
 
 		defer timer.Stop()
 
@@ -63,7 +60,7 @@ func Clear(ctx context.Context, appConfig *appconfig.Config) {
 			select {
 			case <-ctx.Done():
 				return
-			case <-timer.C:
+			case <-timer.Timer.C:
 				xclipboard.Write(xclipboard.FmtText, []byte{})
 				return
 			}
