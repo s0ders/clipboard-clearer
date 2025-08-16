@@ -3,12 +3,12 @@ package clipboard
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	xclipboard "golang.design/x/clipboard"
 
 	"github.com/s0ders/clipboard-clearer/internal/appconfig"
+	"github.com/s0ders/clipboard-clearer/internal/channel"
 )
 
 // WatchAndClear watches the system clipboard and clears it after a given amount of time.
@@ -21,7 +21,7 @@ func WatchAndClear(ctx context.Context, appConfig *appconfig.Config) {
 		watchImageChannel := xclipboard.Watch(ctx, xclipboard.FmtImage) // only detects PNG encoded images
 		watchTextChannel := xclipboard.Watch(ctx, xclipboard.FmtText)
 
-		watchChannel := FanInChannels(ctx, watchTextChannel, watchImageChannel)
+		watchChannel := channel.FanInChannels(ctx, watchTextChannel, watchImageChannel)
 
 		var contextQueue []context.CancelFunc
 
@@ -49,9 +49,6 @@ func WatchAndClear(ctx context.Context, appConfig *appconfig.Config) {
 	}()
 }
 
-// TODO: make the expiration time configurable via a channel which receives value from
-// the systray package when a user clicks on "increase" or "decrease" menu item.
-
 // TODO: see above TODO, would need to stop existing timer and restart them with the new
 // delay.
 
@@ -72,43 +69,4 @@ func Clear(ctx context.Context, appConfig *appconfig.Config) {
 			}
 		}
 	}()
-}
-
-// FanInChannels sends all messages coming from the input channels into a single output channel.
-func FanInChannels[K any](ctx context.Context, channels ...<-chan K) chan K {
-	out := make(chan K)
-
-	var wg sync.WaitGroup
-
-	wg.Add(len(channels))
-
-	for _, channel := range channels {
-		go func() {
-			defer wg.Done()
-
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case v, more := <-channel:
-					if !more {
-						return
-					}
-
-					select {
-					case <-ctx.Done():
-						return
-					case out <- v:
-					}
-				}
-			}
-		}()
-	}
-
-	go func() {
-		wg.Wait()
-		close(out)
-	}()
-
-	return out
 }

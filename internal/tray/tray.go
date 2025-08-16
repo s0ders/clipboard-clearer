@@ -8,7 +8,6 @@ import (
 
 	"github.com/getlantern/systray"
 
-	"github.com/s0ders/clipboard-clearer/icon"
 	"github.com/s0ders/clipboard-clearer/internal/appconfig"
 )
 
@@ -17,7 +16,7 @@ func Start(ctx context.Context, cancel context.CancelFunc, appConfig *appconfig.
 	onExit := func() {}
 
 	onReady := func() {
-		systray.SetTemplateIcon(icon.Data, icon.Data)
+		systray.SetTemplateIcon(Data, Data)
 		systray.SetTooltip("Clipboard Clearer")
 
 		expirationTimeIndicatorCh := systray.AddMenuItem(FormatDuration(appConfig.ClipboardExpiration()), "")
