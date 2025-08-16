@@ -18,6 +18,6 @@
 - [x] GitHub Actions pipeline to lint, tests and release
 - [x] Handle image clipboard
 - [x] Make clipboard liveness time configurable via the system tray
-- [ ] Store non-expired timers in a queue so that, when the duration is updated, their expiration are too
-- [ ] Create App bundle for macOS in CI/CD workflow
+- [x] Update existing timer expiration when expiration duration is updated
+- [ ] Create clean installer for Windows and mac (Inno Setup and DMG)
 - [ ] Make an option to keep a history (configurable size) of the clipboard text content to avoid loss
