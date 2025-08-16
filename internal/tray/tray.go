@@ -4,6 +4,7 @@ package tray
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/getlantern/systray"
@@ -51,7 +52,34 @@ func Start(ctx context.Context, cancel context.CancelFunc, appConfig *appconfig.
 }
 
 func FormatDuration(d time.Duration) string {
-	durationString := d.String()
+	if d == 0 {
+		return "0s"
+	}
 
-	return fmt.Sprintf("Expiration time: %s", durationString)
+	var result strings.Builder
+
+	// Define units in descending order
+	units := []struct {
+		name string
+		dur  time.Duration
+	}{
+		{"h", time.Hour},
+		{"m", time.Minute},
+		{"s", time.Second},
+		{"ms", time.Millisecond},
+		{"μs", time.Microsecond},
+		{"ns", time.Nanosecond},
+	}
+
+	remaining := d
+
+	for _, unit := range units {
+		if remaining >= unit.dur {
+			count := remaining / unit.dur
+			result.WriteString(fmt.Sprintf("%d%s", count, unit.name))
+			remaining -= count * unit.dur
+		}
+	}
+
+	return fmt.Sprintf("Expiration time: %s", result.String())
 }
