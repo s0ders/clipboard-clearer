@@ -1,37 +1,66 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
-
-# The lines below are called `modelines`. See `:help modeline`
-# Feel free to remove those if you don't want/need to use them.
-# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
-# vim: set ts=2 sw=2 tw=0 fo=cnqoj
-
 version: 2
+
+project_name: clipboard-clearer
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - goos:
-      - windows
+  - id: darwin
+    env:
+      - CGO_ENABLED=1
+      - CC=gcc
+    goos:
       - darwin
+    goarch:
+      - amd64
+    gcflags:
+      - -DDARWIN -x objective-c -fobjc-arc
+    ldflags:
+      - framework=Cocoa
+      - -s -w
+
+  - id: linux
+    # skip: true
+    env:
+      - CGO_ENABLED=1
+    goos:
       - linux
     goarch:
       - amd64
+    ldflags:
+      - -s -w
+
+  - id: windows
+    env:
+      - CGO_ENABLED=1
+    goos:
+      - windows
+    goarch:
+      - amd64
+    ldflags:
+      - -H=windowsgui
+      - -s -w
 
 archives:
-  - formats: [tar.gz]
-    name_template: >-
-      {{ .ProjectName }}_
-      {{- title .Os }}_
-      {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
-      {{- else }}{{ .Arch }}{{ end }}
-      {{- if .Arm }}v{{ .Arm }}{{ end }}
-    format_overrides:
-      - goos: windows
-        formats: [zip]
+  - id: darwin-archive
+    builds:
+      - darwin
+    name_template: "{{ .ProjectName }}_{{ .Version }}_darwin_{{ .Arch }}"
+    format: tar.gz
+
+  - id: linux-archive
+    builds:
+      - linux
+    name_template: "{{ .ProjectName }}_{{ .Version }}_linux_{{ .Arch }}"
+    format: tar.gz
+
+  - id: windows-archive
+    builds:
+      - windows
+    name_template: "{{ .ProjectName }}_{{ .Version }}_windows_{{ .Arch }}"
+    format: zip
 
 changelog:
   sort: asc
@@ -41,6 +70,3 @@ changelog:
       - "^test:"
       - "^ci:"
       - "^chore:"
-
-release:
-  footer: >-

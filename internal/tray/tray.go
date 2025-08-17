@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/getlantern/systray"
+	"fyne.io/systray"
 
 	"github.com/s0ders/clipboard-clearer/internal/appconfig"
 )
