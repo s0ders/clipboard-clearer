@@ -1,5 +1,4 @@
 version: 2
-
 project_name: clipboard-clearer
 
 before:
@@ -7,60 +6,63 @@ before:
     - go mod tidy
 
 builds:
-  - id: darwin
-    env:
-      - CGO_ENABLED=1
-      - CC=gcc
+  - id: darwin-amd64
+    main: ./
+    binary: clipboard-clearer
     goos:
       - darwin
     goarch:
       - amd64
-    gcflags:
-      - -DDARWIN -x objective-c -fobjc-arc
-    ldflags:
-      - framework=Cocoa
-      - -s -w
-
-  - id: linux
-    # skip: true
     env:
+      - CC=gcc
       - CGO_ENABLED=1
+    flags:
+      - -gccgoflags="-DDARWIN -x objective-c -fobjc-arc"
+    ldflags:
+      - -s -w
+      - framework=Cocoa
+      - framework=WebKit
+
+  - id: linux-amd64
+    main: ./
+    binary: clipboard-clearer
     goos:
       - linux
     goarch:
       - amd64
+    env:
+      - CGO_ENABLED=1
     ldflags:
       - -s -w
 
-  - id: windows
-    env:
-      - CGO_ENABLED=1
+  - id: windows-amd64
+    main: ./
+    binary: clipboard-clearer
     goos:
       - windows
     goarch:
       - amd64
+    env:
+      - CGO_ENABLED=1
     ldflags:
-      - -H=windowsgui
       - -s -w
 
 archives:
-  - id: darwin-archive
+  - formats: [tar.gz]
     builds:
-      - darwin
-    name_template: "{{ .ProjectName }}_{{ .Version }}_darwin_{{ .Arch }}"
-    format: tar.gz
-
-  - id: linux-archive
-    builds:
-      - linux
-    name_template: "{{ .ProjectName }}_{{ .Version }}_linux_{{ .Arch }}"
-    format: tar.gz
-
-  - id: windows-archive
-    builds:
-      - windows
-    name_template: "{{ .ProjectName }}_{{ .Version }}_windows_{{ .Arch }}"
-    format: zip
+      - darwin-amd64
+      - linux-amd64
+      - windows-amd64
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
 
 changelog:
   sort: asc
