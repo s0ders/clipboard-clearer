@@ -17,7 +17,7 @@ func (c *ExpirationTimer) Stop() {
 }
 
 // Update replaces the underlying timer with a new one firing at the given new duration. The new duration
-// accounts for the time already elapsed since the timer original creation.
+// accounts for the time already elapsed since the timer's original creation.
 func (c *ExpirationTimer) Update(newDuration time.Duration) {
 	if c == nil {
 		return

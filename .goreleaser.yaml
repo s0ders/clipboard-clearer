@@ -6,22 +6,17 @@ before:
     - go mod tidy
 
 builds:
-  - id: darwin-amd64
+  - id: windows-amd64
     main: ./
     binary: clipboard-clearer
     goos:
-      - darwin
+      - windows
     goarch:
       - amd64
     env:
-      - CC=gcc
       - CGO_ENABLED=1
-    flags:
-      - -gccgoflags="-DDARWIN -x objective-c -fobjc-arc"
     ldflags:
       - -s -w
-      - framework=Cocoa
-      - framework=WebKit
 
   - id: linux-amd64
     main: ./
@@ -35,24 +30,11 @@ builds:
     ldflags:
       - -s -w
 
-  - id: windows-amd64
-    main: ./
-    binary: clipboard-clearer
-    goos:
-      - windows
-    goarch:
-      - amd64
-    env:
-      - CGO_ENABLED=1
-    ldflags:
-      - -s -w
-
 archives:
   - formats: [tar.gz]
-    builds:
-      - darwin-amd64
-      - linux-amd64
+    ids:
       - windows-amd64
+      - linux-amd64
     name_template: >-
       {{ .ProjectName }}_
       {{- .Os }}_
@@ -63,6 +45,9 @@ archives:
     format_overrides:
       - goos: windows
         formats: [zip]
+
+signs:
+  - artifacts: checksum
 
 changelog:
   sort: asc
